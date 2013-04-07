@@ -6,8 +6,11 @@
 #include <thread>
 #include <vector>
 #include <unistd.h>
+#include <netinet/in.h>
 
+#include "birdprot.h"
 #include "comconst.h"
+#include "PracticalSocket.h"
 using namespace std;
 #endif
 

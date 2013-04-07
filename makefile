@@ -4,8 +4,10 @@ C11FLAG = -std=c++0x
 THREADFLAG = -pthread
 
 SRCC = birdmain.cpp\
+			 birdmsg.cpp\
 			 PracticalSocket.cpp
 INCC = birdinc.h\
+       birdprot.h\
        comconst.h\
 			 PracticalSocket.h
 OBJC = $(SRCC:.cpp=.o)
@@ -20,6 +22,8 @@ CINC = $(patsubst %,$(INCDIR)/%,$(INCC))
 
 
 SRCP = pigmain.cpp\
+			 pigmsg.cpp\
+			 pigelect.cpp\
 			 PracticalSocket.cpp
 INCP = piginc.h\
 			 pigds.h\
@@ -47,6 +51,10 @@ obj/birdmain.o: src/birdmain.cpp $(CINC)
 	$(CREATEDIR)
 	g++ -c src/birdmain.cpp -I inc $(C11FLAG) $(WFLAG) $(DFLAG) -o obj/birdmain.o
 
+obj/birdmsg.o: src/birdmsg.cpp $(CINC)
+	$(CREATEDIR)
+	g++ -c src/birdmsg.cpp -I inc $(C11FLAG) $(WFLAG) $(DFLAG) -o obj/birdmsg.o
+
 pig: $(POBJ)
 	$(CREATEDIR)
 	g++ -o bin/pig $(WFLAG) $(POBJ) -lm $(THREADFLAG)
@@ -54,6 +62,14 @@ pig: $(POBJ)
 obj/pigmain.o: src/pigmain.cpp $(PINC)
 	$(CREATEDIR)
 	g++ -c src/pigmain.cpp -I inc $(C11FLAG) $(WFLAG) $(DFLAG) -o obj/pigmain.o
+
+obj/pigelect.o: src/pigelect.cpp $(PINC)
+	$(CREATEDIR)
+	g++ -c src/pigelect.cpp -I inc $(C11FLAG) $(WFLAG) $(DFLAG) -o obj/pigelect.o
+
+obj/pigmsg.o: src/pigmsg.cpp $(PINC)
+	$(CREATEDIR)
+	g++ -c src/pigmsg.cpp -I inc $(C11FLAG) $(WFLAG) $(DFLAG) -o obj/pigmsg.o
 
 clean:
 	rm -rf bin/*

@@ -7,8 +7,13 @@
 #include <vector>
 #include <cstring>
 #include <mutex>
+#include <netinet/in.h>
+#include <unistd.h>
 
 #include "pigds.h"
+#include "pigprot.h"
+#include "comconst.h"
+#include "PracticalSocket.h"
 using namespace std;
 
 extern OwnStruct ownNode;

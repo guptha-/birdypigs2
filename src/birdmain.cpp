@@ -11,6 +11,37 @@
 #include "../inc/birdinc.h"
 
 static vector<unsigned int> pigPorts;
+
+/* ===  FUNCTION  ==============================================================
+ *         Name:  listenerFlow
+ *  Description:  The bird listens for incoming messages here
+ * =============================================================================
+ */
+static void listenerFlow ()
+{
+  UDPSocket listenSocket (COM_IP_ADDR, BIRD_LISTEN_PORT);
+
+  while (true) {
+    // Block for msg receipt
+    int inMsgSize;
+    char *inMsg;
+    inMsg = new char[MAX_MSG_SIZE]();
+    try
+    {
+      inMsgSize = listenSocket.recv(inMsg, MAX_MSG_SIZE);
+    }
+    catch (SocketException &e)
+    {
+      cout<<"Bird: "<<e.what()<<endl;
+    }
+    inMsg[inMsgSize] = '\0';
+
+    thread handlerThread (birdMsgHandler, inMsgSize, inMsg);
+    handlerThread.detach();
+  }
+}   /* -----  end of function listenerFlow  ----- */
+
+
 /* ===  FUNCTION  ==============================================================
  *         Name:  getPigPorts
  * =============================================================================
@@ -83,7 +114,7 @@ int spawnPigs ()
         array++;
       }
 
-      cout<<(execv ("./bin/pig", actualArray));
+      execv ("./bin/pig", actualArray);
       cout<<"Problem spawning child"<<endl;
       cout<<errno;
       exit(0);
@@ -92,19 +123,25 @@ int spawnPigs ()
   return EXIT_SUCCESS;
 }   /* -----  end of function spawnPigs  ----- */
 
-
-int main (int argc, char **argv) {
-
+/* ===  FUNCTION  ==============================================================
+ *         Name:  main
+ * =============================================================================
+ */
+int main (int argc, char **argv) 
+{
+  srand(time(NULL));
+  
   // Getting the ports of the pigs from the file
-  if (EXIT_FAILURE == getPigPorts ())
-  {
+  if (EXIT_FAILURE == getPigPorts ()) {
     return EXIT_FAILURE;
   }
+
+  // Listen on incoming port for messages
+  thread handlerThread (listenerFlow);
+  handlerThread.detach();
 
   // Spawning the pigs
-  if (EXIT_FAILURE == spawnPigs ())
-  {
+  if (EXIT_FAILURE == spawnPigs ()) {
     return EXIT_FAILURE;
   }
-
-}
+}				/* ----------  end of function main  ---------- */
