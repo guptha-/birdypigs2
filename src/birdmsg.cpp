@@ -10,19 +10,46 @@
 #include "../inc/birdinc.h"
 
 /* ===  FUNCTION  ==============================================================
+ *         Name:  getTwoBytes
+ *  Description:  Gets two bytes from the message, and returns equiv. int
+ * =============================================================================
+ */
+unsigned short int getTwoBytes (char *&msg, int &msgSize)
+{
+  unsigned short int reply;
+  memcpy (&reply, msg, 2);
+  reply = ntohs(reply);
+  msg += 2;
+  msgSize -= 2;
+
+  return reply;
+}		/* -----  end of function getTwoBytes  ----- */
+
+/* ===  FUNCTION  ==============================================================
+ *         Name:  addTwoBytes
+ *  Description:  Adds two bytes to the message from the given value
+ * =============================================================================
+ */
+void addTwoBytes (char *&msg, int &msgSize, int value)
+{
+  value = htons(value);
+  memcpy (msg, &value, 2);
+  msg += 2;
+  msgSize += 2;
+
+}		/* -----  end of function addTwoBytes  ----- */
+
+/* ===  FUNCTION  ==============================================================
  *         Name:  sendMsg
  *  Description:  This function sends the given msg to the give port
  * =============================================================================
  */
 void sendMsg(char *outMsg, int outMsgSize, unsigned short int destPort)
 {
-  try
-  {
+  try {
     static UDPSocket sendSocket;
     sendSocket.sendTo(outMsg, outMsgSize, COM_IP_ADDR, destPort);
-  }
-  catch (SocketException &e)
-  {
+  } catch (SocketException &e) {
     cout<<"Bird: Cannot send msg"<<endl;
   }
   return;
@@ -44,17 +71,9 @@ void sendBirdPosnMsg (int destPort)
   char *permOutMsg = outMsg;
   int outMsgSize = 0;
 
-  short unsigned int msgType = BIRD_POSN_MSG;
-  msgType = htons(msgType);
-  memcpy (outMsg, &msgType, MSG_TYPE_SIZE);
-  outMsg += MSG_TYPE_SIZE;
-  outMsgSize += MSG_TYPE_SIZE;
-
+  addTwoBytes(outMsg, outMsgSize, BIRD_POSN_MSG);
   short unsigned int birdLoc = rand() % (MAX_POSN + 1);
-  birdLoc = htons(birdLoc);
-  memcpy (outMsg, &birdLoc, PORT_SIZE);
-  outMsg += PORT_SIZE;
-  outMsgSize += PORT_SIZE;
+  addTwoBytes(outMsg, outMsgSize, birdLoc);
 
   sendMsg(permOutMsg, outMsgSize, destPort);
 
@@ -77,11 +96,7 @@ void sendBirdLandMsg (int destPort)
   char *permOutMsg = outMsg;
   int outMsgSize = 0;
 
-  short unsigned int msgType = BIRD_LAND_MSG;
-  msgType = htons(msgType);
-  memcpy (outMsg, &msgType, MSG_TYPE_SIZE);
-  outMsg += MSG_TYPE_SIZE;
-  outMsgSize += MSG_TYPE_SIZE;
+  addTwoBytes(outMsg, outMsgSize, BIRD_LAND_MSG);
 
   sendMsg(permOutMsg, outMsgSize, destPort);
 
@@ -99,11 +114,7 @@ void handleWinnerMsg (int inMsgSize, char *inMsg)
   <----- Msg Type ----X--- Winner Port --->
   */
 
-  unsigned short int port;
-  memcpy (&port, inMsg, PORT_SIZE);
-  port = ntohs(port);
-  inMsg += PORT_SIZE;
-  inMsgSize -= PORT_SIZE;
+  unsigned short int port = getTwoBytes(inMsg, inMsgSize);;
 
   sendBirdPosnMsg(port);
 
@@ -122,18 +133,12 @@ void handleWinnerMsg (int inMsgSize, char *inMsg)
  */
 void birdMsgHandler (int inMsgSize, char *inMsg)
 {
-  if (inMsgSize < 2)
-  {
+  if (inMsgSize < 2) {
     cout<<"Corrupted message at bird "<<endl;
     return;
   }
 
-  short unsigned int msgType;
-  memcpy (&msgType, inMsg, 2);
-  msgType = ntohs(msgType);
-
-  inMsg += 2;
-  inMsgSize -= 2;
+  short unsigned int msgType = getTwoBytes(inMsg, inMsgSize);;
 
   switch (msgType) {
     case ELECT_WINNER_MSG: {
@@ -141,7 +146,7 @@ void birdMsgHandler (int inMsgSize, char *inMsg)
       break;
     }
     default: {
-      cout<<"Invalid msg received at bird "<<endl;
+      cout<<"Invalid msg received at bird "<<msgType<<endl;
       break;
     }
   }

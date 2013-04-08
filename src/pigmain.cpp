@@ -13,6 +13,7 @@
 OwnStruct ownNode;
 vector<OtherStruct> otherVector;
 mutex otherVectorLock;
+atomic<unsigned short int> birdPosn;
 
 /* ===  FUNCTION  ==============================================================
  *         Name:  listenerFlow
@@ -24,18 +25,14 @@ static void listenerFlow ()
 
   UDPSocket listenSocket (COM_IP_ADDR, ownNode.port);
 
-  while (true)
-  {
+  while (true) {
     // Block for msg receipt
     int inMsgSize;
     char *inMsg;
     inMsg = new char[MAX_MSG_SIZE]();
-    try
-    {
+    try {
       inMsgSize = listenSocket.recv(inMsg, MAX_MSG_SIZE);
-    }
-    catch (SocketException &e)
-    {
+    } catch (SocketException &e) {
       cout<<ownNode.port<<": "<<e.what()<<endl;
     }
     inMsg[inMsgSize] = '\0';
@@ -73,7 +70,6 @@ int main (int argc, char *argv[])
 
   // Listen on incoming port for messages
   thread handlerThread(listenerFlow);
-  handlerThread.detach();
 
   // Wait for the other pigs to be spawned
   sleep(1);
@@ -85,6 +81,6 @@ int main (int argc, char *argv[])
   }
   otherVectorLock.unlock();
 
-  sleep (1000000);
+  handlerThread.join();
   return EXIT_SUCCESS;
 }				/* ----------  end of function main  ---------- */

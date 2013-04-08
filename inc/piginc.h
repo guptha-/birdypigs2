@@ -5,6 +5,7 @@
 #include <thread>
 #include <atomic>
 #include <vector>
+#include <set>
 #include <cstring>
 #include <mutex>
 #include <netinet/in.h>
@@ -19,5 +20,6 @@ using namespace std;
 extern OwnStruct ownNode;
 extern vector<OtherStruct> otherVector;
 extern mutex otherVectorLock;
+extern atomic<unsigned short int> birdPosn;
 #endif
 

@@ -19,19 +19,16 @@ static vector<unsigned int> pigPorts;
  */
 static void listenerFlow ()
 {
-  UDPSocket listenSocket (COM_IP_ADDR, BIRD_LISTEN_PORT);
+ UDPSocket listenSocket (BIRD_LISTEN_PORT);
 
   while (true) {
     // Block for msg receipt
     int inMsgSize;
     char *inMsg;
     inMsg = new char[MAX_MSG_SIZE]();
-    try
-    {
+    try {
       inMsgSize = listenSocket.recv(inMsg, MAX_MSG_SIZE);
-    }
-    catch (SocketException &e)
-    {
+    } catch (SocketException &e) {
       cout<<"Bird: "<<e.what()<<endl;
     }
     inMsg[inMsgSize] = '\0';
@@ -39,6 +36,7 @@ static void listenerFlow ()
     thread handlerThread (birdMsgHandler, inMsgSize, inMsg);
     handlerThread.detach();
   }
+  
 }   /* -----  end of function listenerFlow  ----- */
 
 
@@ -51,22 +49,18 @@ static int getPigPorts ()
   ifstream portFile;
   string str;
   portFile.open("portConfig");
-  if (!portFile.good())
-  {
+  if (!portFile.good()) {
     cout<<"No port config file found.\n";
     return EXIT_FAILURE;
   }
   cout<<"Port numbers \t";
-  while (true)
-  {
+  while (true) {
     getline(portFile, str);
-    if (portFile.eof())
-    {
+    if (portFile.eof()) {
       break;
     }
     int portNum = atoi(str.c_str());
-    if (portNum == BIRD_LISTEN_PORT)
-    {
+    if (portNum == BIRD_LISTEN_PORT) {
       cout<<portNum<<" is the port the coordinator listens at! Remove from"<<
         "port list!"<<endl;
       return EXIT_FAILURE;
@@ -86,15 +80,15 @@ static int getPigPorts ()
  */ 
 int spawnPigs ()
 {
-  system ("killall -q -9 pig");
-  system ("killall -q -9 pig");
   int pigPortsCount = pigPorts.size();
+  system("killall -q -9 pig");
+  
   for (auto &curPort : pigPorts) {
     int child = fork();
     if (child < 0) {
       cout<<"Problem spawning pigs!"<<endl;
       return EXIT_FAILURE;
-    } else if (child > 0) {
+    } else if (child == 0) {
       // Child address space
       char **array = (char **) malloc (sizeof(char *) * (pigPortsCount + 2));
       char **actualArray = array;
@@ -120,6 +114,7 @@ int spawnPigs ()
       exit(0);
     }
   }
+
   return EXIT_SUCCESS;
 }   /* -----  end of function spawnPigs  ----- */
 
@@ -138,10 +133,10 @@ int main (int argc, char **argv)
 
   // Listen on incoming port for messages
   thread handlerThread (listenerFlow);
-  handlerThread.detach();
 
   // Spawning the pigs
   if (EXIT_FAILURE == spawnPigs ()) {
     return EXIT_FAILURE;
   }
+  sleep(10000);
 }				/* ----------  end of function main  ---------- */
