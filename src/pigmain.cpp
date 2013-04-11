@@ -57,7 +57,7 @@ int main (int argc, char *argv[])
   ownNode.port = atoi(argv[1]);
   unsigned int randSeed = time(NULL);
   srand(randSeed + ownNode.port);
-  ownNode.posn = (rand() % (MAX_POSN + 1));
+  ownNode.posn = (rand() % MAX_POSN) + 1;
   otherVectorLock.lock();
 
   for (int iter = 2; iter < argc; iter++) {

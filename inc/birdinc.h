@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <thread>
+#include <atomic>
 #include <vector>
 #include <unistd.h>
 #include <netinet/in.h>

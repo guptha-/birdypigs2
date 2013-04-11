@@ -9,6 +9,25 @@
 
 #include "../inc/birdinc.h"
 
+static atomic<unsigned int> timeticks(0);
+
+/* ===  FUNCTION  ==============================================================
+ *         Name:  processTimeticks
+ *  Description:  This function compares the received timestamp against the 
+ *                current stored timeticks value and updates the system 
+ *                timeticks as needed
+ * =============================================================================
+ */
+void processTimeticks (unsigned int tempTimeticks)
+{
+  if (tempTimeticks <= timeticks) {
+    timeticks++;
+  } else {
+    timeticks = ++tempTimeticks;
+  }
+  return;
+}   /* -----  end of function processTimeticks  ----- */
+
 /* ===  FUNCTION  ==============================================================
  *         Name:  getTwoBytes
  *  Description:  Gets two bytes from the message, and returns equiv. int
@@ -64,6 +83,7 @@ void sendBirdPosnMsg (int destPort)
   /*
   |--- 1 ---|--- 2 ---|--- 3 ---|--- 4 ---|
   <----- Msg Type ----X---- Bird Posn ---->
+  <--- Time stamp ----X---- Bird Time ---->
   */
   char msg[MAX_MSG_SIZE];
   char *outMsg = msg;
@@ -72,36 +92,15 @@ void sendBirdPosnMsg (int destPort)
   int outMsgSize = 0;
 
   addTwoBytes(outMsg, outMsgSize, BIRD_POSN_MSG);
-  short unsigned int birdLoc = rand() % (MAX_POSN + 1);
+  short unsigned int birdLoc = (rand() % MAX_POSN) + 1;
   addTwoBytes(outMsg, outMsgSize, birdLoc);
+  addTwoBytes(outMsg, outMsgSize, timeticks);
+  addTwoBytes(outMsg, outMsgSize, (rand() % MAX_AIRTIME) + 1);
 
   sendMsg(permOutMsg, outMsgSize, destPort);
 
   return;
 }		/* -----  end of function sendBirdPosnMsg  ----- */
-
-/* ===  FUNCTION  ==============================================================
- *         Name:  sendBirdLandMsg
- * =============================================================================
- */
-void sendBirdLandMsg (int destPort)
-{
-  /*
-  |--- 1 ---|--- 2 ---|--- 3 ---|--- 4 ---|
-  <----- Msg Type ---->
-  */
-  char msg[MAX_MSG_SIZE];
-  char *outMsg = msg;
-  memset(outMsg, 0, MAX_MSG_SIZE);
-  char *permOutMsg = outMsg;
-  int outMsgSize = 0;
-
-  addTwoBytes(outMsg, outMsgSize, BIRD_LAND_MSG);
-
-  sendMsg(permOutMsg, outMsgSize, destPort);
-
-  return;
-}		/* -----  end of function sendBirdLandMsg  ----- */
 
 /* ===  FUNCTION  ==============================================================
  *         Name:  handleWinnerMsg
@@ -112,15 +111,13 @@ void handleWinnerMsg (int inMsgSize, char *inMsg)
     /*
   |--- 1 ---|--- 2 ---|--- 3 ---|--- 4 ---|
   <----- Msg Type ----X--- Winner Port --->
+  <--- Time Stamp ---->
   */
 
-  unsigned short int port = getTwoBytes(inMsg, inMsgSize);;
+  unsigned short int port = getTwoBytes(inMsg, inMsgSize);
+  processTimeticks(getTwoBytes(inMsg, inMsgSize));
 
   sendBirdPosnMsg(port);
-
-  sleep (rand() % (MAX_SLEEP + 1));
-
-  sendBirdLandMsg(port);
 
   return;
 }		/* -----  end of function handleWinnerMsg  ----- */

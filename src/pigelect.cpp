@@ -11,7 +11,10 @@
 
 atomic<bool> winner(false);
 vector<unsigned int> wallPosns;
+atomic<unsigned int> numberAffected;
+extern atomic<unsigned int> numberRounds;
 mutex wallLock;
+extern atomic<unsigned int> score;
 
 extern atomic <unsigned short int> birdPosn;
 
@@ -20,15 +23,19 @@ extern atomic <unsigned short int> birdPosn;
  *  Description:  This calculates the affected pigs and sends them a status msg
  * =============================================================================
  */
-void processAffectedPigs ()
+void processAffectedPigs (int birdTime)
 {
+  cout<<"Entered processAffectedPigs"<<endl;
   set<unsigned short int> affectedPigs;
   bool landOnSomething = false;
 
   // We hold the other vector and wall locs throughout the calculation. We have
   // to, because the algorithm does not tolerate changes to the DS in between
   otherVectorLock.lock();
+  cout<<"Entered after 1st lock"<<endl;
   wallLock.lock();
+  cout<<"Entered after 2nd lock"<<endl;
+  cout<<"Other vector size: "<<otherVector.size()<<endl;
   if (birdPosn == ownNode.posn) {
     affectedPigs.insert(ownNode.port);
     landOnSomething = true;
@@ -39,55 +46,56 @@ void processAffectedPigs ()
       affectedPigs.insert(otherNode.port);
       landOnSomething = true;
     }
-    if (landOnSomething == true) {
-      unsigned short int tempLoc = birdPosn - 1;
-      while (true) {
-        if (tempLoc == 0) {
-          break;
-        }
-        bool flag = false;
-        if (tempLoc == ownNode.posn) {
-          affectedPigs.insert(ownNode.port);
+  }
+  if (landOnSomething == true) {
+    unsigned short int tempLoc = birdPosn - 1;
+    while (true) {
+      if (tempLoc == 0) {
+        break;
+      }
+      bool flag = false;
+      if (tempLoc == ownNode.posn) {
+        affectedPigs.insert(ownNode.port);
+        flag = true;
+      }
+      for (auto &nextOtherNode : otherVector) {
+        if (nextOtherNode.posn == tempLoc) {
+          // The bird landed directly on a pig, and we are following the 
+          // chain. If there is one empty slot in the chain, we can see the
+          // other way.
+          affectedPigs.insert(nextOtherNode.port);
           flag = true;
         }
-        for (auto &nextOtherNode : otherVector) {
-          if (nextOtherNode.posn == tempLoc) {
-            // The bird landed directly on a pig, and we are following the 
-            // chain. If there is one empty slot in the chain, we can see the
-            // other way.
-            affectedPigs.insert(nextOtherNode.port);
-            flag = true;
-          }
-        }
-        if (flag == false) {
-          // The chain has been broken because of the absence of a pig
-          break;
-        }
-        tempLoc--;
       }
-      tempLoc = birdPosn + 1;
-      while (true) {
-        if (tempLoc == MAX_POSN) {
-          break;
-        }
-        bool flag = false;
-        if (tempLoc == ownNode.posn) {
-          affectedPigs.insert(ownNode.port);
+      if (flag == false) {
+        // The chain has been broken because of the absence of a pig
+        break;
+      }
+      tempLoc--;
+    }
+    tempLoc = birdPosn + 1;
+    while (true) {
+      if (tempLoc == MAX_POSN + 1) {
+        break;
+      }
+      bool flag = false;
+      if (tempLoc == ownNode.posn) {
+        affectedPigs.insert(ownNode.port);
+        flag = true;
+      }
+      for (auto &nextOtherNode : otherVector) {
+        if (nextOtherNode.posn == tempLoc) {
+          // The bird landed directly on a pig, and we are following the 
+          // chain. If there is one empty slot in the chain, we can break
+          affectedPigs.insert(nextOtherNode.port);
           flag = true;
         }
-        for (auto &nextOtherNode : otherVector) {
-          if (nextOtherNode.posn == tempLoc) {
-            // The bird landed directly on a pig, and we are following the 
-            // chain. If there is one empty slot in the chain, we can break
-            affectedPigs.insert(nextOtherNode.port);
-            flag = true;
-          }
-        }
-        if (flag == false) {
-          // The chain has been broken because of the absence of a pig
-          break;
-        }
       }
+      if (flag == false) {
+        // The chain has been broken because of the absence of a pig
+        break;
+      }
+      tempLoc++;
     }
   }
   for (auto &wallLoc : wallPosns) {
@@ -115,17 +123,18 @@ void processAffectedPigs ()
             flag = true;
           }
         }
-        if ((birdPosn - tempLoc > 2) && (flag == false)) {
+        if ((birdPosn - tempLoc >= 2) && (flag == false)) {
           // The chain has been broken because of the absence of a pig. The
           // first condition is to prevent it from breaking out on the two
           // spots adjacent the wall
+          cout<<"Breaking out wall tempLoc: "<<tempLoc<<endl;
           break;
         }
         tempLoc--;
       }
       tempLoc = birdPosn + 1;
       while (true) {
-        if (tempLoc == MAX_POSN) {
+        if (tempLoc == MAX_POSN + 1) {
           break;
         }
         bool flag = false;
@@ -142,18 +151,35 @@ void processAffectedPigs ()
             flag = true;
           }
         }
-        if ((tempLoc - birdPosn > 2) && (flag == false)) {
+        if ((tempLoc - birdPosn >= 2) && (flag == false)) {
           // The chain has been broken because of the absence of a pig
+          cout<<"Breaking out wall tempLoc: "<<tempLoc<<endl;
           break;
         }
+        tempLoc++;
       }
     }
   }
   wallLock.unlock();
   otherVectorLock.unlock();
 
-  for (auto &ports : affectedPigs) {
+  numberAffected = affectedPigs.size();
+  cout<<"The affected pigs: "<<affectedPigs.size()<<"\t";
+  for (auto &port : affectedPigs) {
+    cout<<port<<"\t";
     // Send status message
+    pigSendStatusReqMsg(port, birdTime);
+  }
+  cout<<endl;
+  if (numberAffected == 0) {
+    cout<<"The score is "<<score<<" in "<<numberRounds<<" rounds!!!"<<endl<<endl;
+    otherVectorLock.lock();
+    for (auto &otherNode : otherVector) {
+      pigSendPassMsg(otherNode.port);
+    }
+    otherVectorLock.unlock();
+    cout<<"Calling init from processAffectedPigs"<<endl;
+    pigInitElection();
   }
 
   return;
@@ -165,9 +191,10 @@ void processAffectedPigs ()
  */
 static void getWallPosns ()
 {
-  int numberWalls = rand() % (MAX_WALLS + 1); // Limit number of walls
+  int numberWalls = (rand() % MAX_WALLS) + 1; // Limit number of walls
   // Storing wall positions
   wallLock.lock();
+  wallPosns.clear();
   while (numberWalls--) {
     unsigned int posn;
     while (true) {
@@ -205,6 +232,7 @@ void performWinnerTasks ()
   winner = true;
   
   cout<<"Winner "<<ownNode.port<<" at "<<ownNode.posn<<endl;
+  ownNode.posn = 0;
   pigSendWinnerMsg();
   getWallPosns();
 
@@ -218,7 +246,10 @@ void performWinnerTasks ()
  */
 void pigInitElection ()
 {
-  ownNode.posn = (rand() % (MAX_POSN + 1));
+  sleep(3);
+  cout<<"Initiating election at node "<<ownNode.port<<endl;
+  numberRounds++;
+  ownNode.posn = (rand() % MAX_POSN) + 1;
   otherVectorLock.lock();
   for (auto &otherNode : otherVector) {
     pigSendOfferMsg (otherNode.port);
@@ -269,6 +300,7 @@ void pigFinishElection ()
 
   winner = false;
   cout<<"Loser "<<ownNode.port<<" at "<<ownNode.posn<<endl;
+  ownNode.posn = 0;
  
   otherVectorLock.unlock();
 

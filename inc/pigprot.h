@@ -9,4 +9,7 @@ void pigMsgHandler(int inMsgSize, char *inMsg);
 void pigFinishElection ();
 void pigSendWinnerMsg ();
 void pigSendOfferMsg (int destPort);
+void pigSendStatusReqMsg (unsigned short int port, unsigned int);
+void processAffectedPigs (int);
+void pigSendPassMsg (unsigned short int port);
 #endif
