@@ -176,6 +176,7 @@ void processAffectedPigs (int birdTime)
     pigInitElection();
   }
 
+  ownNode.posn = 0;
   return;
 }		/* -----  end of function processAffectedPigs  ----- */
 
@@ -226,7 +227,6 @@ void performWinnerTasks ()
   winner = true;
   
   cout<<"Winner "<<ownNode.port<<" at "<<ownNode.posn<<endl;
-  ownNode.posn = 0;
   pigSendWinnerMsg();
   getWallPosns();
 
@@ -294,7 +294,6 @@ void pigFinishElection ()
 
   winner = false;
   cout<<"Loser "<<ownNode.port<<" at "<<ownNode.posn<<endl;
-  ownNode.posn = 0;
  
   otherVectorLock.unlock();
 
