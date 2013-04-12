@@ -1,0 +1,20 @@
+numpigs 6, max posns 3, hopdelay 5 138
+numpigs 6, max posns 3, hopdelay 7 296
+numpigs 6, max posns 3, hopdelay 9 316
+numpigs 6, max posns 5, hopdelay 5 111
+numpigs 6, max posns 5, hopdelay 7 215
+numpigs 6, max posns 5, hopdelay 9 264
+numpigs 6, max posns 8, hopdelay 5 39
+numpigs 6, max posns 8, hopdelay 7 128
+numpigs 6, max posns 8, hopdelay 9 144
+numpigs 6, max posns 10, hopdelay 5 31
+numpigs 6, max posns 10, hopdelay 7 84
+numpigs 6, max posns 10, hopdelay 9 113
+numpigs 4, max posns 5, hopdelay 5 8
+numpigs 4, max posns 5, hopdelay 7 30
+numpigs 4, max posns 5, hopdelay 9 65
+numpigs 8, max posns 5, hopdelay 5 166
+numpigs 8, max posns 5, hopdelay 7 256
+numpigs 8, max posns 5, hopdelay 9 313
+
+

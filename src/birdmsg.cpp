@@ -95,7 +95,7 @@ void sendBirdPosnMsg (int destPort)
   short unsigned int birdLoc = (rand() % MAX_POSN) + 1;
   addTwoBytes(outMsg, outMsgSize, birdLoc);
   addTwoBytes(outMsg, outMsgSize, timeticks);
-  addTwoBytes(outMsg, outMsgSize, (rand() % MAX_AIRTIME) + 1);
+  addTwoBytes(outMsg, outMsgSize, AIRTIME);
 
   sendMsg(permOutMsg, outMsgSize, destPort);
 

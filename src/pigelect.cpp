@@ -15,6 +15,7 @@ atomic<unsigned int> numberAffected;
 extern atomic<unsigned int> numberRounds;
 mutex wallLock;
 extern atomic<unsigned int> score;
+atomic <bool> offerSent(false);
 
 extern atomic <unsigned short int> birdPosn;
 
@@ -25,17 +26,13 @@ extern atomic <unsigned short int> birdPosn;
  */
 void processAffectedPigs (int birdTime)
 {
-  cout<<"Entered processAffectedPigs"<<endl;
   set<unsigned short int> affectedPigs;
   bool landOnSomething = false;
 
   // We hold the other vector and wall locs throughout the calculation. We have
   // to, because the algorithm does not tolerate changes to the DS in between
   otherVectorLock.lock();
-  cout<<"Entered after 1st lock"<<endl;
   wallLock.lock();
-  cout<<"Entered after 2nd lock"<<endl;
-  cout<<"Other vector size: "<<otherVector.size()<<endl;
   if (birdPosn == ownNode.posn) {
     affectedPigs.insert(ownNode.port);
     landOnSomething = true;
@@ -127,7 +124,6 @@ void processAffectedPigs (int birdTime)
           // The chain has been broken because of the absence of a pig. The
           // first condition is to prevent it from breaking out on the two
           // spots adjacent the wall
-          cout<<"Breaking out wall tempLoc: "<<tempLoc<<endl;
           break;
         }
         tempLoc--;
@@ -153,7 +149,6 @@ void processAffectedPigs (int birdTime)
         }
         if ((tempLoc - birdPosn >= 2) && (flag == false)) {
           // The chain has been broken because of the absence of a pig
-          cout<<"Breaking out wall tempLoc: "<<tempLoc<<endl;
           break;
         }
         tempLoc++;
@@ -178,7 +173,6 @@ void processAffectedPigs (int birdTime)
       pigSendPassMsg(otherNode.port);
     }
     otherVectorLock.unlock();
-    cout<<"Calling init from processAffectedPigs"<<endl;
     pigInitElection();
   }
 
@@ -246,14 +240,14 @@ void performWinnerTasks ()
  */
 void pigInitElection ()
 {
-  sleep(3);
-  cout<<"Initiating election at node "<<ownNode.port<<endl;
+  sleep(5);
   numberRounds++;
   ownNode.posn = (rand() % MAX_POSN) + 1;
   otherVectorLock.lock();
   for (auto &otherNode : otherVector) {
     pigSendOfferMsg (otherNode.port);
   }
+  offerSent = true;
   otherVectorLock.unlock();
 
   return;

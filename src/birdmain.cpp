@@ -138,5 +138,6 @@ int main (int argc, char **argv)
   if (EXIT_FAILURE == spawnPigs ()) {
     return EXIT_FAILURE;
   }
-  sleep(10000);
+  handlerThread.join();
+  return EXIT_SUCCESS;
 }				/* ----------  end of function main  ---------- */

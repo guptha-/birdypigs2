@@ -80,6 +80,7 @@ int main (int argc, char *argv[])
     pigSendOfferMsg (otherNode.port);
   }
   otherVectorLock.unlock();
+  offerSent = true;
 
   handlerThread.join();
   return EXIT_SUCCESS;

@@ -237,7 +237,6 @@ void handlePassMsg (int inMsgSize, char *inMsg)
   score = getTwoBytes(inMsg, inMsgSize);
   processTimeticks(getTwoBytes(inMsg, inMsgSize));
 
-  cout<<"Calling init from handlePassMsg"<<endl;
   pigInitElection();
 
 }		/* -----  end of function handlePassMsg  ----- */
@@ -257,9 +256,8 @@ void handleStatusReqMsg (int inMsgSize, char *inMsg)
   unsigned short int winnerPort = getTwoBytes(inMsg, inMsgSize);
   unsigned int tempTimeticks = getTwoBytes(inMsg, inMsgSize);
 
-  timeticks += (rand() % MAX_AIRTIME) + 1;
+  timeticks += (rand() % MAX_HOPDELAY) + 1;
 
-  cout<<"ownTime "<<timeticks<<" othertime "<<tempTimeticks<<endl;
   /* A is introduced to account for the fact that many more message
    * exchanges involve the leader */
   otherVectorLock.lock();
@@ -326,7 +324,6 @@ void handleStatusReplyMsg (int inMsgSize, char *inMsg)
     }
     otherVectorLock.unlock();
     cout<<"The score is "<<score<<" in "<<numberRounds<<" rounds!!!"<<endl<<endl;
-    cout<<"Calling init from handleStatusReplyMsg"<<endl;
     pigInitElection();
   }
   return;
@@ -358,10 +355,16 @@ void handleOfferMsg (int inMsgSize, char *inMsg)
   if (offerCount == otherVector.size()) {
     // We have received offers from everyone
     otherVectorLock.unlock();
+    while (!offerSent) {
+      // Busy wait
+      usleep(1000);
+    }
     offerCount = 0;
+    offerSent = false;
     pigFinishElection();
+  } else {
+    otherVectorLock.unlock();
   }
-  otherVectorLock.unlock();
   
   return;
 }		/* -----  end of function handleOfferMsg  ----- */

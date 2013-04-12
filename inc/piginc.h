@@ -21,5 +21,6 @@ extern OwnStruct ownNode;
 extern vector<OtherStruct> otherVector;
 extern mutex otherVectorLock;
 extern atomic<unsigned short int> birdPosn;
+extern atomic <bool> offerSent;
 #endif
 

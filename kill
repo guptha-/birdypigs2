@@ -1,2 +1,2 @@
-killall -9 coord
+killall -9 bird
 killall -9 pig
